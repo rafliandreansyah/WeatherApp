@@ -14,27 +14,15 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 
-class RemoteDataSource {
+@Singleton
+class RemoteDataSource @Inject constructor(private val api: ApiInterface) {
 
     private val appId = "14b080a024d7244671a6e4022c6d4e00"
-
-    companion object{
-        @Volatile
-        private var instance: RemoteDataSource? = null
-
-        fun getInstance(): RemoteDataSource? =
-            instance ?: synchronized(this){
-                instance ?: RemoteDataSource().apply {
-                    instance = this
-                }
-            }
-
-    }
 
     fun getWeatherByLatLon(lat: String, lon: String): LiveData<Resource<WeatherResponse>>{
         val weatherResult = MutableLiveData<Resource<WeatherResponse>>()
         weatherResult.value = Resource.Loading()
-        ApiConfig.apiService().getDataWeather(lat, lon, "hourly,dialy", appId, "metric").enqueue(object : Callback<WeatherResponse>{
+        api.getDataWeather(lat, lon, "hourly,dialy", appId, "metric").enqueue(object : Callback<WeatherResponse>{
             override fun onResponse(
                 call: Call<WeatherResponse>,
                 response: Response<WeatherResponse>
@@ -57,24 +45,24 @@ class RemoteDataSource {
         return weatherResult
     }
 
-    fun getWeatherByCity(cityName: String): LiveData<Resource<WeatherCityResponse>>{
+    fun getWeatherByCity(cityName: String): LiveData<Resource<WeatherCityResponse>> {
         val weatherResultByCity = MutableLiveData<Resource<WeatherCityResponse>>()
-        weatherResultByCity.value = Resource.Loading()
-        ApiConfig.apiService().getDataWeatherByCity(cityName, appId, "metric").enqueue(object : Callback<WeatherCityResponse>{
+        weatherResultByCity.postValue(Resource.Loading())
+        api.getDataWeatherByCity(cityName, appId, "metric").enqueue(object : Callback<WeatherCityResponse>{
             override fun onResponse(
                 call: Call<WeatherCityResponse>,
                 response: Response<WeatherCityResponse>
             ) {
                 if (response.isSuccessful){
-                    weatherResultByCity.value = response.body()?.let { Resource.Success(it) }
+                    weatherResultByCity.postValue(response.body()?.let { Resource.Success(it) })
                 }
                 else{
-                    weatherResultByCity.value = response.errorBody()?.string()?.let { Resource.Error(it) }
+                    weatherResultByCity.postValue(response.errorBody()?.string()?.let { Resource.Error(it) })
                 }
             }
 
             override fun onFailure(call: Call<WeatherCityResponse>, t: Throwable) {
-                weatherResultByCity.value = Resource.Error(t.message.toString())
+                weatherResultByCity.postValue(Resource.Error(t.message.toString()))
             }
 
         })

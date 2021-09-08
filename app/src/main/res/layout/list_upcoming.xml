@@ -11,17 +11,18 @@
     app:strokeColor="@color/white">
 
     <androidx.constraintlayout.widget.ConstraintLayout
-        android:layout_width="wrap_content"
+        android:layout_width="75dp"
         android:layout_height="wrap_content"
-        android:padding="16dp">
+        android:paddingVertical="16dp">
 
         <TextView
             android:id="@+id/tvItemDay"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:fontFamily="@font/poppins_medium"
-            android:textSize="14sp"
             android:textColor="@color/white"
+            android:textSize="14sp"
+            android:textAlignment="center"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
@@ -39,13 +40,14 @@
 
         <TextView
             android:id="@+id/tvItemTemp"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="2dp"
+            android:textAlignment="center"
             android:fontFamily="@font/poppins_regular"
             android:textColor="@color/white"
-            app:layout_constraintEnd_toEndOf="@+id/imgItemCloud"
-            app:layout_constraintStart_toStartOf="@+id/imgItemCloud"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/imgItemCloud"
             tools:text="29\u2103" />
 

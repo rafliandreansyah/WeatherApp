@@ -34,7 +34,7 @@ class UpcomingAdapter @Inject constructor(): RecyclerView.Adapter<UpcomingAdapte
     inner class UpCommingViewHolder(private val binding: ListUpcomingBinding): RecyclerView.ViewHolder(binding.root){
         fun bind(daily: Daily){
             binding.tvItemDay.text = "${Helper.convertDate(daily.dt.toLong())}"
-            binding.tvItemTemp.text = "${daily.temp}℃"
+            binding.tvItemTemp.text = "${daily.temp.day.toInt()}℃"
             Glide.with(itemView)
                 .load("http://openweathermap.org/img/wn/${daily.weather[0].icon}@2x.png")
                 .into(binding.imgItemCloud)

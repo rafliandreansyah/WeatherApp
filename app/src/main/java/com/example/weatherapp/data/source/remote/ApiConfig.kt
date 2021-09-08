@@ -10,24 +10,24 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 
-object ApiConfig{
+@Module
+class ApiConfig{
 
 
     private val BASE_URL = "https://api.openweathermap.org/data/2.5/"
 
 
-    fun apiService(): ApiInterface {
-
+    @Singleton
+    @Provides
+    fun getRetrofit(): ApiInterface{
         val loggingInterceptor = HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.BODY)
         val client = OkHttpClient.Builder().addInterceptor(loggingInterceptor).build()
-
 
         return Retrofit.Builder()
             .baseUrl(BASE_URL)
             .addConverterFactory(GsonConverterFactory.create())
             .client(client)
-            .build()
-            .create(ApiInterface::class.java)
+            .build().create(ApiInterface::class.java)
     }
 
 

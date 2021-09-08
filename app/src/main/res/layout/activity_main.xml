@@ -54,7 +54,7 @@
 
         <View
             android:id="@+id/view"
-            android:layout_width="390dp"
+            android:layout_width="0dp"
             android:layout_height="1dp"
             android:layout_marginStart="16dp"
             android:layout_marginTop="24dp"
@@ -164,8 +164,8 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:orientation="horizontal"
-            android:paddingStart="8dp"
-            android:clipToPadding="true"
+            android:paddingHorizontal="8dp"
+            android:clipToPadding="false"
             app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.0"
