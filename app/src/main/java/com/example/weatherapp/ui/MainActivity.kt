@@ -22,7 +22,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var viewModelFactory: ViewModelFactory
     private lateinit var mainViewModel: MainViewModel
 
-    @Inject
     lateinit var upcomingAdapter: UpcomingAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
