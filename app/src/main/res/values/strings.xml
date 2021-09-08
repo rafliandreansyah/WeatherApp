@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">WeatherApp</string>
+    <string name="humidity">Humidity</string>
+    <string name="air_pressure">Air pressure</string>
+    <string name="add_own_town">Add Own Town</string>
+    <string name="city">City</string>
+    <string name="upcoming_days">Upcoming Days</string>
+</resources>
