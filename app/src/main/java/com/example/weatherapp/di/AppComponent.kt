@@ -1,6 +1,7 @@
 package com.example.weatherapp.di
 
 import android.content.Context
+import com.example.weatherapp.data.source.local.room.di.DatabaseModule
 import com.example.weatherapp.data.source.remote.ApiConfig
 import com.example.weatherapp.ui.MainActivity
 import dagger.BindsInstance
@@ -10,7 +11,7 @@ import javax.inject.Singleton
 
 
 @Singleton
-@Component(modules = [ApiConfig::class])
+@Component(modules = [ApiConfig::class, DatabaseModule::class])
 interface AppComponent {
 
     @Component.Factory

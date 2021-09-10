@@ -1,7 +1,11 @@
 package com.example.weatherapp.ui
 
+import android.app.Dialog
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.View
+import android.view.Window
 import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
 import android.widget.Toast
@@ -12,13 +16,19 @@ import com.example.weatherapp.R
 import com.example.weatherapp.WeatherApplication
 import com.example.weatherapp.data.source.remote.entity.Daily
 import com.example.weatherapp.databinding.ActivityMainBinding
+import com.example.weatherapp.databinding.DialogAddCityBinding
 import com.example.weatherapp.ui.adapter.UpcomingAdapter
 import com.example.weatherapp.utlis.Helper
 import javax.inject.Inject
+import android.R.string.no
+import android.graphics.Rect
+import android.view.WindowManager
+
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
+    private lateinit var listTown: ArrayList<String>
 
     @Inject
     lateinit var mainViewModel: MainViewModel
@@ -35,7 +45,10 @@ class MainActivity : AppCompatActivity() {
         val view = binding.root
         setContentView(view)
 
-        val listTown = arrayListOf("Gdansk", "Warszawa", "Krakow", "Wroclaw", "Lodz")
+        // Get city from local
+        mainViewModel.getAllCityLocal()
+
+        listTown = arrayListOf("Gdansk", "Warszawa", "Krakow", "Wroclaw", "Lodz")
 
         val adapter = ArrayAdapter(this, R.layout.list_item, listTown)
         (binding.acCity as? AutoCompleteTextView)?.setAdapter(adapter)
@@ -49,10 +62,15 @@ class MainActivity : AppCompatActivity() {
             mainViewModel.getWeatherByCity(binding.acCity.text.toString())
         }
 
+        binding.btnAddTown.setOnClickListener {
+            dialogAddTown()
+        }
+
         setDataWeatherByCity()
         setDataListWeatherFor7Days()
         isLoading()
         errorGetData()
+        setDataCity()
 
     }
 
@@ -108,6 +126,56 @@ class MainActivity : AppCompatActivity() {
     private fun errorGetData(){
         mainViewModel.errorMessage.observe(this, { error ->
             Toast.makeText(this, error, Toast.LENGTH_SHORT).show()
+        })
+    }
+
+    private fun dialogAddTown(){
+        val dialog = Dialog(this)
+
+        val dialogBinding = DialogAddCityBinding.inflate(layoutInflater)
+        dialog.setContentView(dialogBinding.root)
+
+        val textWatcher = object : TextWatcher{
+            override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
+            }
+            override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
+                if (p0?.length == 0){
+                    dialogBinding.btnDialogAddTown.isEnabled = false
+                }else{
+                    dialogBinding.btnDialogAddTown.isEnabled = dialogBinding.edtTown.text.toString() != ""
+                }
+            }
+
+            override fun afterTextChanged(p0: Editable?) {
+            }
+        }
+
+        dialogBinding.edtTown.addTextChangedListener(textWatcher)
+
+        dialogBinding.btnDialogAddTown.setOnClickListener {
+            val cityFound = listTown.filter { city ->
+                city.uppercase() == dialogBinding.edtTown.text.toString().uppercase()
+            }
+            if (cityFound.isNotEmpty()){
+                Toast.makeText(this, "Cannot same city added!", Toast.LENGTH_SHORT).show()
+                dialog.dismiss()
+            }
+            else{
+                mainViewModel.insertDataCity(dialogBinding.edtTown.text.toString())
+                listTown.add(dialogBinding.edtTown.text.toString().capitalize())
+                dialog.dismiss()
+            }
+        }
+
+        dialog.show()
+
+    }
+
+    private fun setDataCity(){
+        mainViewModel.dataCityFromLocal.observe(this, { listCity ->
+            if (listCity.size > 0){
+                listTown.addAll(listCity)
+            }
         })
     }
 

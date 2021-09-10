@@ -6,10 +6,13 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.weatherapp.data.WeatherRepository
+import com.example.weatherapp.data.source.local.entity.City
 import com.example.weatherapp.data.source.remote.response.WeatherCityResponse
 import com.example.weatherapp.data.source.remote.response.WeatherResponse
 import com.example.weatherapp.utlis.Resource
 import kotlinx.coroutines.launch
+import java.lang.Exception
+import java.util.ArrayList
 import javax.inject.Inject
 
 class MainViewModel @Inject constructor(private val weatherRepository: WeatherRepository): ViewModel() {
@@ -25,6 +28,9 @@ class MainViewModel @Inject constructor(private val weatherRepository: WeatherRe
 
     private val _weatherResponseByCity = MutableLiveData<WeatherCityResponse?>()
     val weatherResponseByCity: LiveData<WeatherCityResponse?> = _weatherResponseByCity
+
+    private val _dataCityFromLocal = MutableLiveData<ArrayList<String>>()
+    val dataCityFromLocal: LiveData<ArrayList<String>> = _dataCityFromLocal
 
     fun getWeatherByCity(cityName: String) {
         _isLoading.value = true
@@ -45,9 +51,6 @@ class MainViewModel @Inject constructor(private val weatherRepository: WeatherRe
         }
     }
 
-
-
-
     private fun getWeather(lat: String, lon: String) {
         viewModelScope.launch {
             when(val weather = weatherRepository.getDataWeather(lat, lon)){
@@ -60,6 +63,39 @@ class MainViewModel @Inject constructor(private val weatherRepository: WeatherRe
                     _errorMessage.postValue("Not found!")
                     _isLoading.postValue(false)
                 }
+            }
+        }
+    }
+
+    fun getAllCityLocal(){
+        _isLoading.value = true
+        viewModelScope.launch {
+            try {
+                val dataCity = weatherRepository.getDataCityLocal()
+                val listCity = ArrayList<String>()
+                dataCity.forEach {
+                    listCity.add("${it.cityName?.capitalize()}")
+                }
+                _dataCityFromLocal.postValue(listCity)
+                if (dataCity.isNotEmpty()){
+                    _isLoading.postValue(false)
+                }
+
+            }catch (e: Exception){
+                _errorMessage.postValue("Get data city local failed: ${e.message}")
+            }
+        }
+    }
+
+    fun insertDataCity(cityName: String){
+        val city = City()
+        city.cityName = cityName
+
+        viewModelScope.launch {
+            try {
+                weatherRepository.insertCityLocal(city)
+            }catch (e: Exception){
+                _errorMessage.postValue("Insert data city local failed: ${e.message}")
             }
         }
     }

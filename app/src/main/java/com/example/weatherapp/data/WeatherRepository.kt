@@ -1,6 +1,8 @@
 package com.example.weatherapp.data
 
 import com.example.weatherapp.BuildConfig
+import com.example.weatherapp.data.source.local.entity.City
+import com.example.weatherapp.data.source.local.room.CityDao
 import com.example.weatherapp.data.source.remote.ApiInterface
 import com.example.weatherapp.data.source.remote.BaseResponse
 import com.example.weatherapp.data.source.remote.response.WeatherCityResponse
@@ -13,7 +15,8 @@ import javax.inject.Singleton
 
 @Singleton
 class WeatherRepository @Inject constructor(
-    private val remoteDataSource: ApiInterface
+    private val remoteDataSource: ApiInterface,
+    private val localDataSource: CityDao
 ): BaseResponse() {
 
     suspend fun getDataWeatherByCity(cityName: String): Resource<WeatherCityResponse> =
@@ -33,5 +36,15 @@ class WeatherRepository @Inject constructor(
             }
         }
 
+
+    suspend fun getDataCityLocal(): List<City> =
+        withContext(Dispatchers.IO){
+            localDataSource.getAllCity()
+        }
+
+    suspend fun insertCityLocal(city: City) =
+        withContext(Dispatchers.IO){
+            localDataSource.insertCity(city)
+        }
 
 }
