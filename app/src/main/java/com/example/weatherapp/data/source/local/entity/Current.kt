@@ -2,7 +2,6 @@ package com.example.weatherapp.data.source.local.entity
 
 import androidx.room.ColumnInfo
 import androidx.room.PrimaryKey
-import com.example.weatherapp.data.source.remote.entity.Weather
 
 data class Current(
     @PrimaryKey(autoGenerate = true)

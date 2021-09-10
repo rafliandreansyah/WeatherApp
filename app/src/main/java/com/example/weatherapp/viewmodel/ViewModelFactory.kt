@@ -1,6 +1,5 @@
 package com.example.weatherapp.viewmodel
 
-import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.example.weatherapp.data.WeatherRepository
