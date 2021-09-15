@@ -26,6 +26,9 @@ class MainViewModel @Inject constructor(private val weatherRepository: WeatherRe
     private val _weatherResponse = MutableLiveData<WeatherResponse?>()
     val weatherResponse: LiveData<WeatherResponse?> = _weatherResponse
 
+    private val _weatherResponseFirstTime = MutableLiveData<WeatherResponse?>()
+    val weatherResponseFirstTime: LiveData<WeatherResponse?> = _weatherResponseFirstTime
+
     private val _weatherResponseByCity = MutableLiveData<WeatherCityResponse?>()
     val weatherResponseByCity: LiveData<WeatherCityResponse?> = _weatherResponseByCity
 
@@ -56,6 +59,23 @@ class MainViewModel @Inject constructor(private val weatherRepository: WeatherRe
             when(val weather = weatherRepository.getDataWeather(lat, lon)){
                 is Resource.Success -> {
                     _weatherResponse.postValue(weather.data)
+                    _isLoading.postValue(false)
+                }
+                is Resource.Error -> _errorMessage.postValue("Error get data: ${weather.message}")
+                else -> {
+                    _errorMessage.postValue("Not found!")
+                    _isLoading.postValue(false)
+                }
+            }
+        }
+    }
+
+    fun getWeatherFirstTime(lat: String, lon: String){
+        _isLoading.value = true
+        viewModelScope.launch {
+            when(val weather = weatherRepository.getDataWeather(lat, lon)){
+                is Resource.Success -> {
+                    _weatherResponseFirstTime.postValue(weather.data)
                     _isLoading.postValue(false)
                 }
                 is Resource.Error -> _errorMessage.postValue("Error get data: ${weather.message}")

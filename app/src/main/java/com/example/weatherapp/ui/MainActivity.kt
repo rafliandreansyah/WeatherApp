@@ -5,7 +5,6 @@ import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.View
-import android.view.Window
 import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
 import android.widget.Toast
@@ -21,14 +20,37 @@ import com.example.weatherapp.ui.adapter.UpcomingAdapter
 import com.example.weatherapp.utlis.Helper
 import javax.inject.Inject
 import android.R.string.no
+import android.annotation.SuppressLint
+import android.content.pm.PackageManager
 import android.graphics.Rect
+import android.location.LocationManager
+import android.os.Build
+import android.util.Log
 import android.view.WindowManager
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationRequest
+import com.google.android.gms.location.LocationServices
+import java.util.jar.Manifest
 
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private lateinit var listTown: ArrayList<String>
+
+    // Get last location
+    private lateinit var fusedLocationClient: FusedLocationProviderClient
+
+    private lateinit var requestPermissionLauncher: ActivityResultLauncher<String>
+
+    companion object {
+        private const val MY_PERMISSIONS_REQUEST_LOCATION = 99
+    }
 
     @Inject
     lateinit var mainViewModel: MainViewModel
@@ -45,6 +67,10 @@ class MainActivity : AppCompatActivity() {
         val view = binding.root
         setContentView(view)
 
+        initRequestPermission()
+
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+
         // Get city from local
         mainViewModel.getAllCityLocal()
 
@@ -59,12 +85,25 @@ class MainActivity : AppCompatActivity() {
 
 
         binding.refresh.setOnRefreshListener {
-            mainViewModel.getWeatherByCity(binding.acCity.text.toString())
+            if (binding.acCity.text.toString().trim().isEmpty() || binding.acCity.text.toString().trim() == ""){
+                checkPermission()
+                binding.refresh.isRefreshing = false
+            }
+            else {
+                mainViewModel.getWeatherByCity(binding.acCity.text.toString())
+            }
+
         }
 
         binding.btnAddTown.setOnClickListener {
             dialogAddTown()
         }
+
+        // Check permission if granted get last location lat, long if denied request permission
+        checkPermission()
+
+        // Set weather first time by latitude longitude last location
+        setWeatherFirstTime()
 
         setDataWeatherByCity()
         setDataListWeatherFor7Days()
@@ -96,6 +135,41 @@ class MainActivity : AppCompatActivity() {
         mainViewModel.weatherResponse.observe(this, { data ->
             val weatherResponse = data?.copy()
             val daily = weatherResponse?.daily as ArrayList<Daily>
+            daily.removeFirst()
+            upcomingAdapter.setData(daily)
+
+            with(binding){
+
+                rvUpComingDays.layoutManager = LinearLayoutManager(applicationContext, LinearLayoutManager.HORIZONTAL, false)
+                rvUpComingDays.adapter = upcomingAdapter
+                rvUpComingDays.setHasFixedSize(true)
+
+                loading.visibility = View.INVISIBLE
+                refresh.isRefreshing = false
+
+            }
+        })
+    }
+
+    private fun setWeatherFirstTime(){
+        mainViewModel.weatherResponseFirstTime.observe(this,  { weatherResponse ->
+            binding.tvHumidity.text = "${weatherResponse?.current?.humidity}%"
+            binding.tvPressure.text = "${weatherResponse?.current?.pressure} hPa"
+            binding.tvTemp.text = "${weatherResponse?.current?.temp?.toInt()}\u2103"
+            binding.tvDate.text = "${weatherResponse?.current?.dt?.toLong()?.let {
+                Helper.convertDateFullFormat(
+                    it
+                )
+            }}"
+            Glide.with(this)
+                .load("http://openweathermap.org/img/wn/${weatherResponse?.current?.weather?.get(0)?.icon}@2x.png")
+                .into(binding.imgCloud)
+
+            binding.tvDescriptionWeather.text = "${weatherResponse?.current?.weather?.get(0)?.description?.capitalize()}"
+
+            // Recycleview
+            val weatherResponseData = weatherResponse?.copy()
+            val daily = weatherResponseData?.daily as ArrayList<Daily>
             daily.removeFirst()
             upcomingAdapter.setData(daily)
 
@@ -179,6 +253,49 @@ class MainActivity : AppCompatActivity() {
         })
     }
 
+    @SuppressLint("MissingPermission")
+    private fun getLocationFirstTimeByLastLocation(){
+        fusedLocationClient.getCurrentLocation(LocationRequest.PRIORITY_HIGH_ACCURACY, null).addOnSuccessListener {
+            mainViewModel.getWeatherFirstTime(it.latitude.toString(), it.longitude.toString())
+
+            Log.e("Location", "Lat: ${it.latitude}, Lon: ${it.longitude} ")
+        }
+    }
+
+    private fun initRequestPermission(){
+        // Request permission
+        requestPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()){
+                isGranted: Boolean ->
+            if (isGranted){
+                getLocationFirstTimeByLastLocation()
+                Toast.makeText(this, "Permission is granted", Toast.LENGTH_SHORT).show()
+            }
+            else{
+                Toast.makeText(this, "Permission is denied, you cannot get weather by last location!", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun checkPermission(){
+        when{
+            ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION)
+                    == PackageManager.PERMISSION_GRANTED  -> {
+                getLocationFirstTimeByLastLocation()
+                    }
+            else -> {
+                requestPermission()
+            }
+        }
+    }
+
+
+    private fun requestPermission(){
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q){
+            requestPermissionLauncher.launch(android.Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+        }else{
+            requestPermissionLauncher.launch(android.Manifest.permission.ACCESS_FINE_LOCATION)
+        }
+    }
 
 
 }
