@@ -10,6 +10,9 @@ import com.example.weatherapp.data.source.local.entity.City
 import com.example.weatherapp.data.source.remote.response.WeatherCityResponse
 import com.example.weatherapp.data.source.remote.response.WeatherResponse
 import com.example.weatherapp.utlis.Resource
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import java.lang.Exception
 import java.util.ArrayList
@@ -34,6 +37,19 @@ class MainViewModel @Inject constructor(private val weatherRepository: WeatherRe
 
     private val _dataCityFromLocal = MutableLiveData<ArrayList<String>>()
     val dataCityFromLocal: LiveData<ArrayList<String>> = _dataCityFromLocal
+
+    private val _selectedCity = MutableStateFlow<String>("")
+    val selectedCity: StateFlow<String> = _selectedCity
+
+    init {
+        viewModelScope.launch {
+            _isLoading.value = true
+            weatherRepository.getSelectedCity.collect { selectedCity ->
+                _isLoading.value = false
+                _selectedCity.value = selectedCity
+            }
+        }
+    }
 
     fun getWeatherByCity(cityName: String) {
         _isLoading.value = true
@@ -110,13 +126,26 @@ class MainViewModel @Inject constructor(private val weatherRepository: WeatherRe
     fun insertDataCity(cityName: String){
         val city = City()
         city.cityName = cityName
-
+        _isLoading.value = true
         viewModelScope.launch {
             try {
                 weatherRepository.insertCityLocal(city)
             }catch (e: Exception){
                 _errorMessage.postValue("Insert data city local failed: ${e.message}")
             }
+        }
+    }
+
+    fun addSelectedCity(cityName: String){
+        _isLoading.value = true
+        viewModelScope.launch {
+            weatherRepository.addSelectedCity(cityName)
+        }
+    }
+
+    fun clearDataStore(){
+        viewModelScope.launch {
+            weatherRepository.clearDataStore()
         }
     }
 

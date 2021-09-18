@@ -7,8 +7,10 @@ import com.example.weatherapp.data.source.remote.ApiInterface
 import com.example.weatherapp.data.source.remote.BaseResponse
 import com.example.weatherapp.data.source.remote.response.WeatherCityResponse
 import com.example.weatherapp.data.source.remote.response.WeatherResponse
+import com.example.weatherapp.utlis.DataStore
 import com.example.weatherapp.utlis.Resource
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -16,7 +18,8 @@ import javax.inject.Singleton
 @Singleton
 class WeatherRepository @Inject constructor(
     private val remoteDataSource: ApiInterface,
-    private val localDataSource: CityDao
+    private val localDataSource: CityDao,
+    private val dataStore: DataStore
 ): BaseResponse() {
 
     suspend fun getDataWeatherByCity(cityName: String): Resource<WeatherCityResponse> =
@@ -45,6 +48,18 @@ class WeatherRepository @Inject constructor(
     suspend fun insertCityLocal(city: City) =
         withContext(Dispatchers.IO){
             localDataSource.insertCity(city)
+        }
+
+    suspend fun addSelectedCity(cityName: String) =
+        withContext(Dispatchers.IO){
+            dataStore.addSelectedCity(cityName)
+        }
+
+    val getSelectedCity: Flow<String> = dataStore.citySelected
+
+    suspend fun clearDataStore() =
+        withContext(Dispatchers.IO){
+            dataStore.clearDataStore()
         }
 
 }

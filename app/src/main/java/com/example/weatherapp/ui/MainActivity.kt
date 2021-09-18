@@ -32,9 +32,14 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationServices
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
 import java.util.jar.Manifest
 
 
@@ -48,9 +53,7 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var requestPermissionLauncher: ActivityResultLauncher<String>
 
-    companion object {
-        private const val MY_PERMISSIONS_REQUEST_LOCATION = 99
-    }
+
 
     @Inject
     lateinit var mainViewModel: MainViewModel
@@ -81,9 +84,10 @@ class MainActivity : AppCompatActivity() {
 
         binding.acCity.setOnItemClickListener { adapterView, view, i, l ->
             adapter.getItem(i)?.let { mainViewModel.getWeatherByCity(it) }
+            adapter.getItem(i)?.let { mainViewModel.addSelectedCity(it) }
         }
 
-
+        // Refresh get weather update
         binding.refresh.setOnRefreshListener {
             if (binding.acCity.text.toString().trim().isEmpty() || binding.acCity.text.toString().trim() == ""){
                 checkPermission()
@@ -95,12 +99,17 @@ class MainActivity : AppCompatActivity() {
 
         }
 
+        // If have selected city in data store get data weather by city last selected else get data weather by location
+        getSelectedCityOrByLocation()
+
         binding.btnAddTown.setOnClickListener {
             dialogAddTown()
         }
-
-        // Check permission if granted get last location lat, long if denied request permission
-        checkPermission()
+        binding.btnRequestLocation.setOnClickListener {
+            checkPermission()
+            binding.acCity.setText("")
+            mainViewModel.clearDataStore()
+        }
 
         // Set weather first time by latitude longitude last location
         setWeatherFirstTime()
@@ -111,6 +120,27 @@ class MainActivity : AppCompatActivity() {
         errorGetData()
         setDataCity()
 
+    }
+
+    private fun getSelectedCityOrByLocation(){
+        // Start a coroutine in the lifecycle scope
+        lifecycleScope.launch {
+            // repeatOnLifecycle launches the block in a new coroutine every time the
+            // lifecycle is in the STARTED state (or above) and cancels it when it's STOPPED.
+            repeatOnLifecycle(Lifecycle.State.STARTED){
+                mainViewModel.selectedCity.collect { selectedCity ->
+                    if (selectedCity != "" && selectedCity != "not found"){
+                        binding.acCity.setText(selectedCity, false)
+                        mainViewModel.getWeatherByCity(selectedCity)
+                    }
+                    else if (selectedCity == "not found"){
+                        // Check permission if granted get last location lat, long if denied request permission
+                        checkPermission()
+                    }
+                }
+            }
+
+        }
     }
 
     private fun setDataWeatherByCity(){
@@ -255,6 +285,7 @@ class MainActivity : AppCompatActivity() {
 
     @SuppressLint("MissingPermission")
     private fun getLocationFirstTimeByLastLocation(){
+        binding.loading.visibility = View.VISIBLE
         fusedLocationClient.getCurrentLocation(LocationRequest.PRIORITY_HIGH_ACCURACY, null).addOnSuccessListener {
             mainViewModel.getWeatherFirstTime(it.latitude.toString(), it.longitude.toString())
 
@@ -267,7 +298,7 @@ class MainActivity : AppCompatActivity() {
         requestPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()){
                 isGranted: Boolean ->
             if (isGranted){
-                getLocationFirstTimeByLastLocation()
+//                getLocationFirstTimeByLastLocation()
                 Toast.makeText(this, "Permission is granted", Toast.LENGTH_SHORT).show()
             }
             else{
