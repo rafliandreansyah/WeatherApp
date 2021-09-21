@@ -12,43 +12,40 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/textField"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.Dense.ExposedDropdownMenu"
-            android:layout_width="0dp"
+        <AutoCompleteTextView
+            android:id="@+id/acCity"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="24dp"
             android:layout_marginEnd="16dp"
+            android:background="@drawable/autocomplete_background"
+            android:drawableEnd="@drawable/ic_dropdown"
+            android:fontFamily="@font/poppins_regular"
             android:hint="@string/city"
-            android:textColorHint="@color/white"
-            app:boxBackgroundColor="@color/white_transparent"
-            app:endIconTint="@color/white"
+            android:inputType="none"
+            android:textColor="@color/black"
+            android:textColorHint="@color/grey_hint"
+            android:textSize="12sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent">
+            app:layout_constraintTop_toTopOf="parent" />
 
-            <AutoCompleteTextView
-                android:id="@+id/acCity"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:inputType="none"
-                android:textColor="@color/white" />
-
-        </com.google.android.material.textfield.TextInputLayout>
 
         <TextView
             android:id="@+id/tvDate"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
             android:layout_marginTop="32dp"
+            android:layout_marginEnd="16dp"
             android:fontFamily="@font/poppins_light"
             android:textAlignment="center"
             android:textColor="@color/white"
             android:textSize="14sp"
-            app:layout_constraintEnd_toEndOf="@+id/textField"
-            app:layout_constraintStart_toStartOf="@+id/textField"
-            app:layout_constraintTop_toBottomOf="@+id/textField"
+            app:layout_constraintEnd_toEndOf="@+id/acCity"
+            app:layout_constraintStart_toStartOf="@+id/acCity"
+            app:layout_constraintTop_toBottomOf="@+id/acCity"
             tools:text="Wednesday, 20 januari 2020" />
 
 

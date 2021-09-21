@@ -20,7 +20,7 @@ import javax.inject.Inject
 
 class MainViewModel @Inject constructor(private val weatherRepository: WeatherRepository): ViewModel() {
 
-    private val _isLoading = MutableLiveData<Boolean>()
+    private val _isLoading = MutableLiveData<Boolean>(true)
     val isLoading: LiveData<Boolean> = _isLoading
 
     private val _errorMessage = MutableLiveData<String>()
@@ -71,6 +71,7 @@ class MainViewModel @Inject constructor(private val weatherRepository: WeatherRe
     }
 
     private fun getWeather(lat: String, lon: String) {
+        _isLoading.value = true
         viewModelScope.launch {
             when(val weather = weatherRepository.getDataWeather(lat, lon)){
                 is Resource.Success -> {

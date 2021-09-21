@@ -6,7 +6,6 @@ import android.text.Editable
 import android.text.TextWatcher
 import android.view.View
 import android.widget.ArrayAdapter
-import android.widget.AutoCompleteTextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -19,18 +18,13 @@ import com.example.weatherapp.databinding.DialogAddCityBinding
 import com.example.weatherapp.ui.adapter.UpcomingAdapter
 import com.example.weatherapp.utlis.Helper
 import javax.inject.Inject
-import android.R.string.no
 import android.annotation.SuppressLint
 import android.content.pm.PackageManager
-import android.graphics.Rect
-import android.location.LocationManager
 import android.os.Build
 import android.util.Log
-import android.view.WindowManager
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.appcompat.app.AlertDialog
-import androidx.core.app.ActivityCompat
+import androidx.appcompat.widget.ListPopupWindow
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -40,7 +34,6 @@ import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationServices
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
-import java.util.jar.Manifest
 
 
 class MainActivity : AppCompatActivity() {
@@ -48,12 +41,12 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private lateinit var listTown: ArrayList<String>
 
+    private var stateClick = 0
+
     // Get last location
     private lateinit var fusedLocationClient: FusedLocationProviderClient
 
     private lateinit var requestPermissionLauncher: ActivityResultLauncher<String>
-
-
 
     @Inject
     lateinit var mainViewModel: MainViewModel
@@ -77,14 +70,34 @@ class MainActivity : AppCompatActivity() {
         // Get city from local
         mainViewModel.getAllCityLocal()
 
+        // Initial drop down
+        val listPopupWindow = ListPopupWindow(this, null, R.attr.listPopupWindowStyle)
+        // Set dropdown anchor under acCity
+        listPopupWindow.anchorView = binding.acCity
+
         listTown = arrayListOf("Gdansk", "Warszawa", "Krakow", "Wroclaw", "Lodz")
 
         val adapter = ArrayAdapter(this, R.layout.list_item, listTown)
-        (binding.acCity as? AutoCompleteTextView)?.setAdapter(adapter)
+        listPopupWindow.setAdapter(adapter)
 
-        binding.acCity.setOnItemClickListener { adapterView, view, i, l ->
+        listPopupWindow.setOnItemClickListener { adapterView, view, i, l ->
             adapter.getItem(i)?.let { mainViewModel.getWeatherByCity(it) }
             adapter.getItem(i)?.let { mainViewModel.addSelectedCity(it) }
+            // Dismiss popup.
+            listPopupWindow.dismiss()
+        }
+
+        binding.acCity.setOnClickListener {
+            // first click show drop down
+            if(stateClick == 0){
+                listPopupWindow.show()
+                stateClick += 1
+            }else{
+                // Second click close drop down
+                listPopupWindow.dismiss()
+                stateClick = 0
+            }
+
         }
 
         // Refresh get weather update
@@ -174,7 +187,7 @@ class MainActivity : AppCompatActivity() {
                 rvUpComingDays.adapter = upcomingAdapter
                 rvUpComingDays.setHasFixedSize(true)
 
-                loading.visibility = View.INVISIBLE
+                //loading.visibility = View.INVISIBLE
                 refresh.isRefreshing = false
 
             }
@@ -209,7 +222,7 @@ class MainActivity : AppCompatActivity() {
                 rvUpComingDays.adapter = upcomingAdapter
                 rvUpComingDays.setHasFixedSize(true)
 
-                loading.visibility = View.INVISIBLE
+                //loading.visibility = View.INVISIBLE
                 refresh.isRefreshing = false
 
             }
@@ -218,11 +231,11 @@ class MainActivity : AppCompatActivity() {
 
     private fun isLoading(){
         mainViewModel.isLoading.observe(this, { loading ->
-            if (loading == true){
-                binding.loading.visibility = View.VISIBLE
+            if (loading == false){
+                binding.loading.visibility = View.INVISIBLE
             }
             else {
-                binding.loading.visibility = View.INVISIBLE
+                binding.loading.visibility = View.VISIBLE
             }
         })
     }
