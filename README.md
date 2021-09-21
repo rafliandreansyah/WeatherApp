@@ -1,6 +1,9 @@
 # WeatherApp
 
-Weather app get open api from https://openweathermap.org/
+Weather app get open api from https://openweathermap.org/ <br/><br/>
+<p align="center">
+  <img src="https://user-images.githubusercontent.com/47078618/134115159-7f2cf123-5a8c-433e-b29b-a0a878594d9b.jpg" />
+</p>
 
 ## Summary
 1. This app use [MVVM Pattern](https://en.wikipedia.org/wiki/Model%E2%80%93view%E2%80%93viewmodel) which has been recommended by google on [component architecture](https://developer.android.com/jetpack/guide?gclid=Cj0KCQjwv5uKBhD6ARIsAGv9a-zdJX3_u4zRglZeRo_N9JHx-E6QxVt3jX0qZC3kE_7Cio6jX5jGmd4aAj9MEALw_wcB&gclsrc=aw.ds)
