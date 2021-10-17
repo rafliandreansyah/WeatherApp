@@ -17,7 +17,7 @@ interface ApiInterface {
         @Query("exclude") exclude: String,
         @Query("appid") appId: String,
         @Query("units") units: String
-    ): Response<WeatherResponse>
+    ): WeatherResponse
 
     @GET("weather")
     suspend fun getDataWeatherByCity(

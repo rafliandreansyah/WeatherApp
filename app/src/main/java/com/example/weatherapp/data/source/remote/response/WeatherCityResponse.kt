@@ -1,6 +1,6 @@
 package com.example.weatherapp.data.source.remote.response
 
-import com.example.weatherapp.data.source.remote.entity.*
+import com.example.weatherapp.data.entity.*
 
 data class WeatherCityResponse(
     val base: String,

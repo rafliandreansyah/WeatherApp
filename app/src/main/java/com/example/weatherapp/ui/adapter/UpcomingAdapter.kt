@@ -4,7 +4,7 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
-import com.example.weatherapp.data.source.remote.entity.Daily
+import com.example.weatherapp.data.entity.Daily
 import com.example.weatherapp.databinding.ListUpcomingBinding
 import com.example.weatherapp.utlis.Helper
 import javax.inject.Inject
@@ -33,10 +33,10 @@ class UpcomingAdapter @Inject constructor(): RecyclerView.Adapter<UpcomingAdapte
 
     inner class UpCommingViewHolder(private val binding: ListUpcomingBinding): RecyclerView.ViewHolder(binding.root){
         fun bind(daily: Daily){
-            binding.tvItemDay.text = "${Helper.convertDate(daily.dt.toLong())}"
-            binding.tvItemTemp.text = "${daily.temp.day.toInt()}℃"
+            binding.tvItemDay.text = "${daily.dt?.toLong()?.let { Helper.convertDate(it) }}"
+            binding.tvItemTemp.text = "${daily.temp?.day?.toInt()}℃"
             Glide.with(itemView)
-                .load("http://openweathermap.org/img/wn/${daily.weather[0].icon}@2x.png")
+                .load("http://openweathermap.org/img/wn/${daily.weather?.get(0)?.icon}@2x.png")
                 .into(binding.imgItemCloud)
         }
     }

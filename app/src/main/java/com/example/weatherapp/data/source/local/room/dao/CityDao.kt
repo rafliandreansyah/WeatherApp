@@ -1,9 +1,9 @@
-package com.example.weatherapp.data.source.local.room
+package com.example.weatherapp.data.source.local.room.dao
 
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
-import com.example.weatherapp.data.source.local.entity.City
+import com.example.weatherapp.data.entity.City
 import javax.inject.Singleton
 
 @Singleton

@@ -12,7 +12,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.bumptech.glide.Glide
 import com.example.weatherapp.R
 import com.example.weatherapp.WeatherApplication
-import com.example.weatherapp.data.source.remote.entity.Daily
+import com.example.weatherapp.data.entity.Daily
 import com.example.weatherapp.databinding.ActivityMainBinding
 import com.example.weatherapp.databinding.DialogAddCityBinding
 import com.example.weatherapp.ui.adapter.UpcomingAdapter
@@ -157,10 +157,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setDataWeatherByCity(){
-        mainViewModel.weatherResponseByCity.observe(this, { data ->
-            binding.tvHumidity.text = "${data?.main?.humidity}%"
-            binding.tvPressure.text = "${data?.main?.pressure} hPa"
-            binding.tvTemp.text = "${data?.main?.temp?.toInt()}\u2103"
+        mainViewModel.current.observe(this, { data ->
+            binding.tvHumidity.text = "${data?.humidity}%"
+            binding.tvPressure.text = "${data?.pressure} hPa"
+            binding.tvTemp.text = "${data?.temp?.toInt()}\u2103"
             binding.tvDate.text = "${data?.dt?.toLong()?.let {
                 Helper.convertDateFullFormat(
                     it
@@ -175,9 +175,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setDataListWeatherFor7Days(){
-        mainViewModel.weatherResponse.observe(this, { data ->
-            val weatherResponse = data?.copy()
-            val daily = weatherResponse?.daily as ArrayList<Daily>
+        mainViewModel.upcoming.observe(this, { data ->
+            val daily = data as ArrayList
             daily.removeFirst()
             upcomingAdapter.setData(daily)
 
@@ -311,7 +310,7 @@ class MainActivity : AppCompatActivity() {
         requestPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()){
                 isGranted: Boolean ->
             if (isGranted){
-//                getLocationFirstTimeByLastLocation()
+                getLocationFirstTimeByLastLocation()
                 Toast.makeText(this, "Permission is granted", Toast.LENGTH_SHORT).show()
             }
             else{
