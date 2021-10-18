@@ -6,6 +6,7 @@ import com.example.weatherapp.data.entity.Current
 import com.example.weatherapp.data.entity.Daily
 import com.example.weatherapp.data.entity.relation.CurrentWithWeathers
 import com.example.weatherapp.data.entity.relation.DailyWithWeathers
+import com.example.weatherapp.data.entity.relation.WeatherDataWithCurrentAndDaily
 import com.example.weatherapp.data.source.local.room.dao.CityDao
 import com.example.weatherapp.data.source.local.room.dao.WeatherDao
 import com.example.weatherapp.data.source.remote.response.WeatherResponse
@@ -25,9 +26,6 @@ class LocalDataSource @Inject constructor(
 
 
     suspend fun updateData(weatherResponse: WeatherResponse) = weatherDao.updateData(weatherResponse)
-
-    fun getDataWeather(): Flow<WeatherResponse> = weatherDao.getWeather(1)
-    fun getDataDaily(): Flow<List<DailyWithWeathers>> = weatherDao.getDailyWithWeathers()
-    fun getDataCurrent(): Flow<CurrentWithWeathers> = weatherDao.getCurrentWithWeathers(1)
+    fun getWeatherDataWithCurrentAndDaily(): Flow<WeatherDataWithCurrentAndDaily> = weatherDao.getWeatherDataWithCurrentAndDaily(1)
 
 }

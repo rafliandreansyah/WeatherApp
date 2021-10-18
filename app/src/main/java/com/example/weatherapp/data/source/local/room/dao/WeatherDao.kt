@@ -6,20 +6,16 @@ import com.example.weatherapp.data.entity.Daily
 import com.example.weatherapp.data.entity.Weather
 import com.example.weatherapp.data.entity.relation.CurrentWithWeathers
 import com.example.weatherapp.data.entity.relation.DailyWithWeathers
+import com.example.weatherapp.data.entity.relation.WeatherDataWithCurrentAndDaily
 import com.example.weatherapp.data.source.remote.response.WeatherResponse
 import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface WeatherDao {
 
+    @Transaction
     @Query("SELECT * FROM WeatherResponse WHERE id = :id")
-    fun getWeather(id: Long): Flow<WeatherResponse>
-
-    @Query("SELECT * FROM Current WHERE id = :id")
-    fun getCurrentWithWeathers(id: Long): Flow<CurrentWithWeathers>
-
-    @Query("SELECT * FROM Daily")
-    fun getDailyWithWeathers(): Flow<List<DailyWithWeathers>>
+    fun getWeatherDataWithCurrentAndDaily(id: Long): Flow<WeatherDataWithCurrentAndDaily>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insertWeathers(weathers: List<Weather>)
@@ -31,7 +27,7 @@ interface WeatherDao {
     fun insertDaily(daily: Daily): Long
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun insertWeatherResponse(weatherResponse: WeatherResponse)
+    fun insertWeatherResponse(weatherResponse: WeatherResponse) : Long
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insertAllDaily(daily: List<Daily>)
@@ -52,10 +48,10 @@ interface WeatherDao {
         deleteWeather()
 
         val newWeatherResponse = weatherResponse.copy(id = 1)
-        insertWeatherResponse(newWeatherResponse)
+        val weatherID = insertWeatherResponse(newWeatherResponse)
 
         // Return currentId
-        val newCurrent = weatherResponse.current?.copy(id = 1)
+        val newCurrent = weatherResponse.current?.copy(id = 1, weatherDataId = weatherID)
         val currentId = newCurrent?.let { insertCurrent(it) }
 
         // Add current foreign key to weather
@@ -68,8 +64,11 @@ interface WeatherDao {
         //Insert weather with foreign key current
         weathersCurrent?.let { insertWeathers(it) }
 
-        weatherResponse.daily?.forEach { daily ->
+        weatherResponse.daily?.forEach {
             // return dailyId
+            val daily = it.copy(
+                weatherDataId = weatherID
+            )
             val dailyId = insertDaily(daily)
 
             // Add daily id to weather
@@ -80,7 +79,7 @@ interface WeatherDao {
             }
 
             // Insert Weather with foreign key from daily
-            weathersDaily?.let { insertWeathers(it) }
+            weathersDaily?.let { weathers -> insertWeathers(weathers) }
         }
 
     }

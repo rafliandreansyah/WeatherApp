@@ -22,5 +22,6 @@ data class Current(
     @Ignore var weather: List<Weather>? = null,
     var wind_deg: Int? = null,
     var wind_gust: Double? = null,
-    var wind_speed: Double? = null
+    var wind_speed: Double? = null,
+    var weatherDataId: Long? = null
 )

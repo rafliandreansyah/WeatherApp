@@ -5,7 +5,7 @@ import androidx.lifecycle.ViewModelProvider
 import com.example.weatherapp.data.repository.WeatherRepository
 import com.example.weatherapp.ui.MainViewModel
 
-class ViewModelFactory(private val weatherRepository: WeatherRepository): ViewModelProvider.NewInstanceFactory() {
+class ViewModelFactory<VM: ViewModel>(val provider: () -> VM): ViewModelProvider.NewInstanceFactory() {
 
 //    companion object {
 //        private var instance: ViewModelFactory? = null
@@ -19,12 +19,7 @@ class ViewModelFactory(private val weatherRepository: WeatherRepository): ViewMo
 //    }
 
     override fun <T : ViewModel?> create(modelClass: Class<T>): T {
-        when{
-            modelClass.isAssignableFrom(MainViewModel::class.java) -> {
-                return MainViewModel(weatherRepository) as T
-            }
-            else -> throw Throwable("View Model Unknown ${modelClass.name}")
-        }
+        return provider() as T
     }
 
 }

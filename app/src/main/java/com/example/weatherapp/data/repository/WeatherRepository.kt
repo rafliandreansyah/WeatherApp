@@ -3,11 +3,10 @@ package com.example.weatherapp.data.repository
 import android.content.Context
 import com.example.weatherapp.BuildConfig
 import com.example.weatherapp.data.entity.City
-import com.example.weatherapp.data.entity.Current
 import com.example.weatherapp.data.entity.relation.CurrentWithWeathers
 import com.example.weatherapp.data.entity.relation.DailyWithWeathers
+import com.example.weatherapp.data.entity.relation.WeatherDataWithCurrentAndDaily
 import com.example.weatherapp.data.source.local.LocalDataSource
-import com.example.weatherapp.data.source.local.room.dao.CityDao
 import com.example.weatherapp.data.source.remote.ApiInterface
 import com.example.weatherapp.data.source.remote.BaseResponse
 import com.example.weatherapp.data.source.remote.response.WeatherCityResponse
@@ -38,10 +37,10 @@ class WeatherRepository @Inject constructor(
         }
 
 
-    suspend fun getDataWeather(lat: String, lon: String): Flow<Resource<WeatherResponse>?> =
+    suspend fun getDataWeatherWithCurrentAndDaily(lat: String, lon: String): Flow<Resource<WeatherDataWithCurrentAndDaily>?> =
         networkBoundResource(
             query = {
-                localDataSource.getDataWeather()
+                localDataSource.getWeatherDataWithCurrentAndDaily()
             },
             fetch = {
                 remoteDataSource.getDataWeather(lat, lon, "minutely,hourly", BuildConfig.API_KEY, BuildConfig.UNITS)
@@ -50,13 +49,9 @@ class WeatherRepository @Inject constructor(
                 localDataSource.updateData(it)
             },
             shouldFetch = {
-                Helper.checkConnection(context)
+                Helper.connectionIsActive(context)
             }
         )
-
-    fun getCurrent(): Flow<CurrentWithWeathers> = localDataSource.getDataCurrent()
-
-    fun getListUpComming(): Flow<List<DailyWithWeathers>> = localDataSource.getDataDaily()
 
 
     suspend fun getDataCityLocal(): List<City> =

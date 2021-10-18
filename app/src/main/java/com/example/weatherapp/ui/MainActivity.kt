@@ -27,11 +27,15 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.widget.ListPopupWindow
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import com.example.weatherapp.viewmodel.ViewModelFactory
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationServices
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 
@@ -48,20 +52,22 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var requestPermissionLauncher: ActivityResultLauncher<String>
 
-    @Inject
-    lateinit var mainViewModel: MainViewModel
+    private lateinit var mainViewModel: MainViewModel
 
     @Inject
     lateinit var upcomingAdapter: UpcomingAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
 
-        (application as WeatherApplication).appComponent.inject(this)
+        val appComponent = (application as WeatherApplication).appComponent
+        appComponent.inject(this)
 
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         val view = binding.root
         setContentView(view)
+
+        mainViewModel = ViewModelProvider(this, ViewModelFactory<MainViewModel>{appComponent.mainViewModel})[MainViewModel::class.java]
 
         initRequestPermission()
 
@@ -81,6 +87,12 @@ class MainActivity : AppCompatActivity() {
         listPopupWindow.setAdapter(adapter)
 
         listPopupWindow.setOnItemClickListener { adapterView, view, i, l ->
+            if (!Helper.connectionIsActive(this)){
+                Snackbar.make(binding.constraint, "You're offline, Please check your connection!", Snackbar.LENGTH_INDEFINITE)
+                    .setAction("Dismiss"){}
+                    .show()
+                return@setOnItemClickListener
+            }
             adapter.getItem(i)?.let { mainViewModel.getWeatherByCity(it) }
             adapter.getItem(i)?.let { mainViewModel.addSelectedCity(it) }
             // Dismiss popup.
@@ -102,6 +114,15 @@ class MainActivity : AppCompatActivity() {
 
         // Refresh get weather update
         binding.refresh.setOnRefreshListener {
+            if (!Helper.connectionIsActive(this)){
+                Snackbar.make(binding.constraint, "You're offline, Please check your connection!", Snackbar.LENGTH_INDEFINITE)
+                    .setAction("Dismiss"){
+                        binding.refresh.isRefreshing = false
+                    }
+                    .show()
+                return@setOnRefreshListener
+            }
+
             if (binding.acCity.text.toString().trim().isEmpty() || binding.acCity.text.toString().trim() == ""){
                 checkPermission()
                 binding.refresh.isRefreshing = false
@@ -119,9 +140,16 @@ class MainActivity : AppCompatActivity() {
             dialogAddTown()
         }
         binding.btnRequestLocation.setOnClickListener {
-            checkPermission()
-            binding.acCity.setText("")
-            mainViewModel.clearDataStore()
+            if (!Helper.connectionIsActive(this)){
+                Snackbar.make(binding.constraint, "You're offline, Please check your connection!", Snackbar.LENGTH_INDEFINITE)
+                    .setAction("Dismiss"){}
+                    .show()
+
+            }else{
+                checkPermission()
+                binding.acCity.setText("")
+                mainViewModel.clearDataStore()
+            }
         }
 
         // Set weather first time by latitude longitude last location
@@ -132,6 +160,9 @@ class MainActivity : AppCompatActivity() {
         isLoading()
         errorGetData()
         setDataCity()
+
+        //
+        Log.e("CheckMemoriViewModel", mainViewModel.toString())
 
     }
 
@@ -157,26 +188,27 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setDataWeatherByCity(){
-        mainViewModel.current.observe(this, { data ->
-            binding.tvHumidity.text = "${data?.humidity}%"
-            binding.tvPressure.text = "${data?.pressure} hPa"
-            binding.tvTemp.text = "${data?.temp?.toInt()}\u2103"
-            binding.tvDate.text = "${data?.dt?.toLong()?.let {
+        mainViewModel.weatherResponse.observe(this, { data ->
+            binding.tvHumidity.text = "${data?.current?.humidity}%"
+            binding.tvPressure.text = "${data?.current?.pressure} hPa"
+            binding.tvTemp.text = "${data?.current?.temp?.toInt()}\u2103"
+            binding.tvDate.text = "${data?.current?.dt?.toLong()?.let {
                 Helper.convertDateFullFormat(
                     it
                 )
             }}"
             Glide.with(this)
-                .load("http://openweathermap.org/img/wn/${data?.weather?.get(0)?.icon}@2x.png")
+                .load("http://openweathermap.org/img/wn/${data?.current?.weather?.get(0)?.icon}@2x.png")
                 .into(binding.imgCloud)
 
-            binding.tvDescriptionWeather.text = "${data?.weather?.get(0)?.description?.capitalize()}"
+            binding.tvDescriptionWeather.text = "${data?.current?.weather?.get(0)?.description?.capitalize()}"
         })
     }
 
     private fun setDataListWeatherFor7Days(){
-        mainViewModel.upcoming.observe(this, { data ->
-            val daily = data as ArrayList
+        mainViewModel.weatherResponse.observe(this, {
+            val weatherResponse = it?.copy()
+            val daily = weatherResponse?.daily as ArrayList
             daily.removeFirst()
             upcomingAdapter.setData(daily)
 
@@ -241,6 +273,13 @@ class MainActivity : AppCompatActivity() {
 
     private fun errorGetData(){
         mainViewModel.errorMessage.observe(this, { error ->
+            MaterialAlertDialogBuilder(this)
+                .setTitle("Error")
+                .setMessage(error)
+                .setPositiveButton("Dismiss") { dialog, which ->
+                    // Respond to positive button press
+                }
+                .show()
             Toast.makeText(this, error, Toast.LENGTH_SHORT).show()
         })
     }
@@ -311,10 +350,11 @@ class MainActivity : AppCompatActivity() {
                 isGranted: Boolean ->
             if (isGranted){
                 getLocationFirstTimeByLastLocation()
-                Toast.makeText(this, "Permission is granted", Toast.LENGTH_SHORT).show()
             }
             else{
-                Toast.makeText(this, "Permission is denied, you cannot get weather by last location!", Toast.LENGTH_SHORT).show()
+                Snackbar.make(binding.constraint, "Permission is denied, you cannot get weather by last location!", Snackbar.LENGTH_LONG)
+                    .setAction("Dismiss"){}
+                    .show()
             }
         }
     }
