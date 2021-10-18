@@ -1,5 +1,6 @@
 package com.example.weatherapp.ui
 
+import android.content.Context
 import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -25,7 +26,11 @@ import java.lang.Exception
 import java.util.ArrayList
 import javax.inject.Inject
 
-class MainViewModel @Inject constructor(private val weatherRepository: WeatherRepository): ViewModel() {
+class MainViewModel @Inject constructor(
+    private val weatherRepository: WeatherRepository,
+    private val context: Context
+
+    ): ViewModel() {
 
     private val _isLoading = MutableLiveData<Boolean>(true)
     val isLoading: LiveData<Boolean> = _isLoading
@@ -68,6 +73,12 @@ class MainViewModel @Inject constructor(private val weatherRepository: WeatherRe
                     getWeather("${weatherByCity.data?.coord?.lat}", "${weatherByCity.data?.coord?.lon}")
                 }
                 is Resource.Error -> {
+                    _isLoading.postValue(false)
+                    if (!Helper.connectionIsActive(context)){
+                        getWeather("${weatherByCity.data?.coord?.lat}", "${weatherByCity.data?.coord?.lon}")
+                        _errorMessage.postValue("Error get data: You're offline, please check your connection")
+                        return@launch
+                    }
                     _errorMessage.postValue("Error get data: ${weatherByCity.message}")
                 }
                 else -> {
@@ -96,7 +107,14 @@ class MainViewModel @Inject constructor(private val weatherRepository: WeatherRe
                         _weatherResponse.postValue(data)
                         _isLoading.postValue(false)
                     }
-                    is Resource.Error -> _errorMessage.postValue("Error get data: ${weatherWithCurrentAndDaily.message}")
+                    is Resource.Error -> {
+                        _isLoading.postValue(false)
+                        if (!Helper.connectionIsActive(context)){
+                            _errorMessage.postValue("Error get data: You're offline, please check your connection")
+                            return@collect
+                        }
+                        _errorMessage.postValue("Error get data: ${weatherWithCurrentAndDaily.message}")
+                    }
                     else -> {
                         _errorMessage.postValue("Not found!")
                         _isLoading.postValue(false)
